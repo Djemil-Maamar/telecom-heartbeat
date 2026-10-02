@@ -14,7 +14,241 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      ops_field_reports: {
+        Row: {
+          battery_voltage: number | null
+          checklist: Json
+          created_at: string
+          fuel_level_pct: number | null
+          hour_meter: number | null
+          id: string
+          notes: string | null
+          photos: string[]
+          task_id: string
+          technician_name: string
+        }
+        Insert: {
+          battery_voltage?: number | null
+          checklist?: Json
+          created_at?: string
+          fuel_level_pct?: number | null
+          hour_meter?: number | null
+          id?: string
+          notes?: string | null
+          photos?: string[]
+          task_id: string
+          technician_name: string
+        }
+        Update: {
+          battery_voltage?: number | null
+          checklist?: Json
+          created_at?: string
+          fuel_level_pct?: number | null
+          hour_meter?: number | null
+          id?: string
+          notes?: string | null
+          photos?: string[]
+          task_id?: string
+          technician_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ops_field_reports_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "ops_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ops_sites: {
+        Row: {
+          access_notes: string | null
+          code: string
+          created_at: string
+          equipment: string | null
+          id: string
+          last_alert: string | null
+          last_alert_at: string | null
+          lat: number
+          lng: number
+          name: string
+          region: string
+          state: string
+          status: string
+        }
+        Insert: {
+          access_notes?: string | null
+          code: string
+          created_at?: string
+          equipment?: string | null
+          id?: string
+          last_alert?: string | null
+          last_alert_at?: string | null
+          lat: number
+          lng: number
+          name: string
+          region: string
+          state: string
+          status?: string
+        }
+        Update: {
+          access_notes?: string | null
+          code?: string
+          created_at?: string
+          equipment?: string | null
+          id?: string
+          last_alert?: string | null
+          last_alert_at?: string | null
+          lat?: number
+          lng?: number
+          name?: string
+          region?: string
+          state?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      ops_task_activity: {
+        Row: {
+          actor: string
+          category: string
+          created_at: string
+          id: string
+          message: string
+          task_id: string
+        }
+        Insert: {
+          actor: string
+          category: string
+          created_at?: string
+          id?: string
+          message: string
+          task_id: string
+        }
+        Update: {
+          actor?: string
+          category?: string
+          created_at?: string
+          id?: string
+          message?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ops_task_activity_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "ops_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ops_tasks: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          description: string
+          due_at: string | null
+          equipment: string | null
+          escalated_at: string | null
+          id: string
+          priority: string
+          site_id: string
+          status: string
+          task_code: string
+          technician_id: string | null
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          description?: string
+          due_at?: string | null
+          equipment?: string | null
+          escalated_at?: string | null
+          id?: string
+          priority?: string
+          site_id: string
+          status?: string
+          task_code: string
+          technician_id?: string | null
+          title: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          description?: string
+          due_at?: string | null
+          equipment?: string | null
+          escalated_at?: string | null
+          id?: string
+          priority?: string
+          site_id?: string
+          status?: string
+          task_code?: string
+          technician_id?: string | null
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ops_tasks_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "ops_sites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ops_tasks_technician_id_fkey"
+            columns: ["technician_id"]
+            isOneToOne: false
+            referencedRelation: "ops_technicians"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ops_technicians: {
+        Row: {
+          availability: string
+          call_sign: string
+          created_at: string
+          id: string
+          lat: number
+          lng: number
+          name: string
+          phone: string | null
+          region: string
+        }
+        Insert: {
+          availability?: string
+          call_sign: string
+          created_at?: string
+          id?: string
+          lat: number
+          lng: number
+          name: string
+          phone?: string | null
+          region: string
+        }
+        Update: {
+          availability?: string
+          call_sign?: string
+          created_at?: string
+          id?: string
+          lat?: number
+          lng?: number
+          name?: string
+          phone?: string | null
+          region?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
