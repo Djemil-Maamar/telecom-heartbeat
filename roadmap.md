@@ -1,14 +1,14 @@
 # Roadmap
-- [ ] Database: sites (coords, status, last alert), technicians (coords), tasks, activity, GPM checklists + seed
-- [ ] App shell (sidebar, header) matching screenshots
-- [ ] Overview "Shift at a glance"
-- [ ] Network map: colored markers, site popup (name, status, last alert, dispatch info), status filters + legend, mobile-friendly, nearest technician assignment
-- [ ] SLA countdown per criticality + escalation alerts
-- [ ] Work orders list + task detail
-- [ ] Field intervention sheet / GPM mobile checklist (hour meter, fuel, battery voltage, photos)
-- [ ] Field team page
-- [ ] Map: realtime site status + last updated time; search by site name/code and center map
-- [ ] Map: marker clustering; geographic zones per intervention sector; assign + track from site card
-- [ ] Configurable alerts when site goes down / back to normal
-- [ ] Site card: chronological history of status changes and interventions
-- [ ] Report export (site statuses + interventions by period)
+- [x] Database: sites (coords, status, last alert), technicians (coords), tasks, activity, GPM checklists + seed
+- [x] App shell (sidebar, header) matching screenshots
+- [x] Overview "Shift at a glance"
+- [x] Network map: colored markers, site popup (name, status, last alert, dispatch info), status filters + legend, mobile-friendly, nearest technician assignment
+- [x] SLA countdown per criticality + escalation alerts
+- [x] Work orders list + task detail
+- [x] Field intervention sheet / GPM mobile checklist (hour meter, fuel, battery voltage, photos)
+- [x] Field team page
+- [x] Map: realtime site status + last updated time; search by site name/code and center map
+- [x] Map: marker clustering; geographic zones per intervention sector; assign + track from site card
+- [x] Configurable alerts when site goes down / back to normal
+- [x] Site card: chronological history of status changes and interventions
+- [x] Report export (site statuses + interventions by period)

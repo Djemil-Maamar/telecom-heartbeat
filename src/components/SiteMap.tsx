@@ -29,8 +29,8 @@ export default function SiteMap({ sites, allSites, techs, selectedId, focus, sho
   useEffect(() => {
     if (!el.current) return;
     const m = L.map(el.current).setView([9.08, 7.4], 6);
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
-      attribution: "&copy; OpenStreetMap &copy; CARTO",
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "&copy; OpenStreetMap contributors",
       maxZoom: 19,
     }).addTo(m);
     zoneLayer.current = L.layerGroup().addTo(m);
