@@ -76,6 +76,7 @@ export type Database = {
           region: string
           state: string
           status: string
+          updated_at: string
         }
         Insert: {
           access_notes?: string | null
@@ -91,6 +92,7 @@ export type Database = {
           region: string
           state: string
           status?: string
+          updated_at?: string
         }
         Update: {
           access_notes?: string | null
@@ -106,6 +108,7 @@ export type Database = {
           region?: string
           state?: string
           status?: string
+          updated_at?: string
         }
         Relationships: []
       }
