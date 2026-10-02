@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PageHead, Panel } from "@/components/AppShell";
 import { SlaBadge } from "@/components/SlaBadge";
 import {
-  ACTIVE, SITE_STATUS, distanceKm, fmtTime, logActivity, useNow, useRealtime, useSites, useTasks, useTechs,
+  ACTIVE, SITE_STATUS, statusLabel, distanceKm, fmtTime, logActivity, useNow, useLiveState, useSiteEvents, useSites, useTasks, useTechs,
   type SiteStatus,
 } from "@/lib/ops";
 
@@ -31,7 +31,7 @@ function SitesPage() {
   const { data: sites = [] } = useSites();
   const { data: techs = [] } = useTechs();
   const { data: tasks = [] } = useTasks();
-  const { live, lastEvent } = useRealtime();
+  const { live, lastEvent } = useLiveState();
   const now = useNow();
   const qc = useQueryClient();
   const [filters, setFilters] = useState<Set<SiteStatus>>(new Set(STATUSES));
@@ -49,6 +49,12 @@ function SitesPage() {
     () => (selected ? techs.filter((t) => t.availability !== "off_duty").map((t) => ({ t, d: distanceKm(selected, t) })).sort((a, b) => a.d - b.d).slice(0, 3) : []),
     [selected, techs],
   );
+  const { data: events = [] } = useSiteEvents(selectedId);
+  const allSiteTasks = tasks.filter((t) => t.site_id === selectedId);
+  const history = [
+    ...events.map((e) => ({ at: e.created_at, kind: "status" as const, text: `Statut : ${SITE_STATUS[(e.old_status ?? "normal") as SiteStatus]?.label ?? e.old_status} → ${SITE_STATUS[e.new_status as SiteStatus]?.label ?? e.new_status}` })),
+    ...allSiteTasks.map((t) => ({ at: t.completed_at ?? t.created_at, kind: "task" as const, text: `${t.task_code} · ${t.title} — ${statusLabel(t.status)}${t.technician ? ` (${t.technician.name})` : ""}`, id: t.id })),
+  ].sort((a, b) => b.at.localeCompare(a.at));
   const lastUpdate = sites.reduce((m, s) => Math.max(m, new Date(s.updated_at).getTime()), 0);
 
   const select = (id: string) => {
@@ -229,6 +235,7 @@ function SitesPage() {
                 ))}
               </div>
 
+              <AssignBox techs={techs} onAssign={assign} />
               <div>
                 <h3 className="eyebrow mb-2">Techniciens les plus proches</h3>
                 {nearest.map(({ t, d }, i) => (
@@ -248,11 +255,41 @@ function SitesPage() {
                 ))}
                 {nearest.length === 0 && <p className="text-xs text-muted-foreground">Aucun technicien disponible.</p>}
               </div>
+              <div>
+                <h3 className="eyebrow mb-2">Historique</h3>
+                <ol className="space-y-2 border-l pl-3">
+                  {history.map((h, i) => (
+                    <li key={i} className="relative text-xs">
+                      <span className={`absolute -left-[17px] top-1 size-2 rounded-full ${h.kind === "status" ? "bg-warn" : "bg-primary"}`} />
+                      <div>{"id" in h && h.id ? <Link to="/tasks/$id" params={{ id: h.id }} className="hover:underline">{h.text}</Link> : h.text}</div>
+                      <div className="font-mono text-muted-foreground">{fmtTime(h.at)}</div>
+                    </li>
+                  ))}
+                  {history.length === 0 && <li className="text-xs text-muted-foreground">Aucun historique.</li>}
+                </ol>
+              </div>
             </div>
           )}
         </Panel>
       </div>
       <p className="mt-3 flex items-center gap-1 text-xs text-muted-foreground"><Radio className="size-3" />Les statuts se mettent à jour automatiquement en temps réel.</p>
     </>
+  );
+}
+
+function AssignBox({ techs, onAssign }: { techs: { id: string; name: string; call_sign: string; availability: string }[]; onAssign: (id: string, name: string) => void }) {
+  const [tech, setTech] = useState("");
+  return (
+    <div>
+      <h3 className="eyebrow mb-2">Assigner une intervention</h3>
+      <div className="flex gap-2">
+        <select value={tech} onChange={(e) => setTech(e.target.value)} className="h-10 min-w-0 flex-1 rounded-md border bg-card px-2 text-sm">
+          <option value="">Choisir un technicien…</option>
+          {techs.map((t) => <option key={t.id} value={t.id}>{t.name} · {t.call_sign} ({t.availability.replace("_", " ")})</option>)}
+        </select>
+        <button disabled={!tech} onClick={() => { const t = techs.find((x) => x.id === tech); if (t) onAssign(t.id, t.name); }}
+          className="rounded-md bg-primary px-3 text-sm font-semibold text-primary-foreground disabled:opacity-50">Assigner</button>
+      </div>
+    </div>
   );
 }

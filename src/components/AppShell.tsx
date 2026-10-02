@@ -1,18 +1,27 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Activity, ClipboardList, MapPinned, Radio, Users } from "lucide-react";
+import { Activity, ClipboardList, FileBarChart, MapPinned, Radio, Users } from "lucide-react";
+import { toast } from "sonner";
 import type { ReactNode } from "react";
-import { useRealtime, useTasks, ACTIVE } from "@/lib/ops";
+import { useRealtime, useLiveState, useTasks, ACTIVE, loadPrefs } from "@/lib/ops";
 
 const NAV = [
   { to: "/", label: "Overview", icon: Activity },
   { to: "/tasks", label: "Work orders", icon: ClipboardList },
   { to: "/sites", label: "Network sites", icon: MapPinned },
   { to: "/team", label: "Field team", icon: Users },
+  { to: "/reports", label: "Reports & alerts", icon: FileBarChart },
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
-  const { live } = useRealtime();
+  useRealtime((old, site) => {
+    if (!old || old === site.status) return;
+    const p = loadPrefs();
+    if (site.status === "alarm" && p.down) toast.error(`${site.code} · ${site.name} hors service`, { description: site.last_alert ?? "Alarme / panne critique" });
+    else if (site.status === "maintenance" && p.maintenance) toast.warning(`${site.code} · ${site.name} en maintenance`);
+    else if (site.status === "normal" && p.restored) toast.success(`${site.code} · ${site.name} de retour à la normale`);
+  });
+  const { live } = useLiveState();
   const { data: tasks } = useTasks();
   const overdue = (tasks ?? []).filter((t) => ACTIVE.includes(t.status) && t.due_at && new Date(t.due_at).getTime() < Date.now()).length;
 
