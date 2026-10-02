@@ -1,0 +1,2 @@
+create policy "field photos read" on storage.objects for select to anon, authenticated using (bucket_id = 'field-photos');
+create policy "field photos upload" on storage.objects for insert to anon, authenticated with check (bucket_id = 'field-photos');
