@@ -8,3 +8,7 @@
 - [ ] Field intervention sheet / GPM mobile checklist (hour meter, fuel, battery voltage, photos)
 - [ ] Field team page
 - [ ] Map: realtime site status + last updated time; search by site name/code and center map
+- [ ] Map: marker clustering; geographic zones per intervention sector; assign + track from site card
+- [ ] Configurable alerts when site goes down / back to normal
+- [ ] Site card: chronological history of status changes and interventions
+- [ ] Report export (site statuses + interventions by period)

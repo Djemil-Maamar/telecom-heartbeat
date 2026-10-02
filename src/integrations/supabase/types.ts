@@ -61,6 +61,38 @@ export type Database = {
           },
         ]
       }
+      ops_site_events: {
+        Row: {
+          created_at: string
+          id: string
+          new_status: string
+          old_status: string | null
+          site_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          new_status: string
+          old_status?: string | null
+          site_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          new_status?: string
+          old_status?: string | null
+          site_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ops_site_events_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "ops_sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ops_sites: {
         Row: {
           access_notes: string | null
