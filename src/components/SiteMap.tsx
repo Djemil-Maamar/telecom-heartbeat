@@ -39,7 +39,7 @@ export default function SiteMap({ sites, allSites, techs, selectedId, focus, sho
       maxClusterRadius: 45,
       showCoverageOnHover: false,
       iconCreateFunction: (c) => {
-        const worst = c.getAllChildMarkers().reduce((w, mk) => Math.max(w, RANK[(mk.options as { status?: string }).status ?? "normal"]), 0);
+        const worst = c.getAllChildMarkers().reduce((w, mk) => Math.max(w, RANK[(mk.options as { status?: string }).status ?? "normal"] ?? 0), 0);
         const st = Object.keys(RANK).find((k) => RANK[k] === worst);
         return L.divIcon({ className: "", html: `<div class="site-cluster site-cluster--${st}">${c.getChildCount()}</div>`, iconSize: [40, 40] });
       },

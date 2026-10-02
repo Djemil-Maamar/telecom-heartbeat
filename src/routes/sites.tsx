@@ -77,7 +77,7 @@ function SitesPage() {
   async function setStatus(status: SiteStatus) {
     if (!selected) return;
     const { error } = await supabase.from("ops_sites").update({ status }).eq("id", selected.id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     qc.invalidateQueries({ queryKey: ["sites"] });
   }
 

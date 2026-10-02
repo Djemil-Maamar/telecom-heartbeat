@@ -37,7 +37,7 @@ function TaskDetail() {
 
   async function update(patch: Partial<Task>, note?: string) {
     const { error } = await supabase.from("ops_tasks").update({ ...patch, ...(patch.status === "completed" ? { completed_at: new Date().toISOString() } : {}) }).eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     if (note) await logActivity(id, "Operations Desk", note, "status_change");
     qc.invalidateQueries();
   }
@@ -83,7 +83,7 @@ function TaskDetail() {
             </ol>
             <form className="mt-5 grid gap-3 border-t pt-4 md:grid-cols-2" onSubmit={async (e) => {
               e.preventDefault();
-              if (!actor.trim() || !msg.trim()) return toast.error("Name and update are required");
+              if (!actor.trim() || !msg.trim()) { toast.error("Name and update are required"); return; }
               await logActivity(id, actor.trim(), msg.trim(), cat);
               setMsg(""); qc.invalidateQueries({ queryKey: ["activity"] });
             }}>

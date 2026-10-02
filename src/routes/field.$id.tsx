@@ -30,7 +30,7 @@ function FieldSheet() {
   const { data: tasks } = useTasks();
   const qc = useQueryClient();
   const task = tasks?.find((t) => t.id === id);
-  const items = CHECKLISTS[task?.type ?? "GPM"];
+  const items: string[] = CHECKLISTS[task?.type ?? "GPM"] ?? [];
   const [tech, setTech] = useState("");
   const [hours, setHours] = useState("");
   const [fuel, setFuel] = useState(50);
@@ -57,7 +57,7 @@ function FieldSheet() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!tech.trim()) return toast.error("Nom du technicien requis");
+    if (!tech.trim()) { toast.error("Nom du technicien requis"); return; }
     setSaving(true);
     try {
       const photos: string[] = [];
