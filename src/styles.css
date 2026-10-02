@@ -108,3 +108,10 @@
 @media (pointer: coarse) { .site-pin { width: 30px; height: 30px; } }
 @keyframes pin-pulse { 0% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--crit) 60%, transparent); } 70% { box-shadow: 0 0 0 12px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
 .leaflet-container { font-family: var(--font-sans); background: var(--muted); }
+.site-cluster { width: 40px; height: 40px; border-radius: 9999px; display: grid; place-items: center; font: 600 13px var(--font-mono); color: var(--card); border: 3px solid var(--card); box-shadow: 0 1px 6px oklch(0 0 0 / 30%); }
+.site-cluster--normal { background: var(--ok); }
+.site-cluster--maintenance { background: var(--warn); }
+.site-cluster--alarm { background: var(--crit); }
+.zone { stroke: var(--primary); stroke-width: 1.5; stroke-dasharray: 6 6; fill: var(--primary); fill-opacity: 0.06; }
+.zone--alarm { stroke: var(--crit); fill: var(--crit); }
+.zone-label { font: 500 10px var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--foreground); text-align: center; white-space: nowrap; }

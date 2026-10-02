@@ -36,6 +36,7 @@ function SitesPage() {
   const qc = useQueryClient();
   const [filters, setFilters] = useState<Set<SiteStatus>>(new Set(STATUSES));
   const [query, setQuery] = useState("");
+  const [zones, setZones] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [focus, setFocus] = useState<{ lat: number; lng: number; key: number } | null>(null);
 
@@ -165,6 +166,9 @@ function SitesPage() {
               </button>
             );
           })}
+          <button onClick={() => setZones(!zones)} aria-pressed={zones} className={`flex h-11 items-center gap-2 rounded-lg border px-3 text-sm ${zones ? "bg-card" : "opacity-50"}`}>
+            <span className="size-3 rounded-full border-2 border-dashed border-primary" />Zones
+          </button>
           <span className="flex h-11 items-center gap-2 px-2 text-xs text-muted-foreground">
             <span className="grid size-4 place-items-center rounded bg-sidebar text-[8px] text-sidebar-primary">T</span> Technicien
           </span>
@@ -175,7 +179,7 @@ function SitesPage() {
         <Panel className="relative h-[60vh] overflow-hidden lg:h-[640px]">
           <ClientOnly fallback={<div className="grid h-full place-items-center text-sm text-muted-foreground">Chargement de la carte…</div>}>
             <Suspense fallback={<div className="grid h-full place-items-center text-sm text-muted-foreground">Chargement de la carte…</div>}>
-              <SiteMap sites={visible} techs={techs} selectedId={selectedId} focus={focus} onSelect={select} />
+              <SiteMap sites={visible} allSites={sites} showZones={zones} techs={techs} selectedId={selectedId} focus={focus} onSelect={select} />
             </Suspense>
           </ClientOnly>
         </Panel>
