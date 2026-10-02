@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
@@ -90,32 +90,55 @@ export const useActivity = (taskId?: string) =>
     },
   });
 
-/** Live updates: refresh cached data whenever sites, tasks or activity change. */
-export function useRealtime() {
+export type AlertPrefs = { down: boolean; maintenance: boolean; restored: boolean };
+export const DEFAULT_PREFS: AlertPrefs = { down: true, maintenance: false, restored: true };
+export function loadPrefs(): AlertPrefs {
+  try { return { ...DEFAULT_PREFS, ...JSON.parse(localStorage.getItem("ops-alert-prefs") ?? "{}") }; } catch { return DEFAULT_PREFS; }
+}
+export const savePrefs = (p: AlertPrefs) => localStorage.setItem("ops-alert-prefs", JSON.stringify(p));
+
+type LiveState = { live: boolean; lastEvent: number | null };
+let liveState: LiveState = { live: false, lastEvent: null };
+const listeners = new Set<() => void>();
+const setLive = (p: Partial<LiveState>) => { liveState = { ...liveState, ...p }; listeners.forEach((l) => l()); };
+export const useLiveState = () =>
+  useSyncExternalStore((l) => { listeners.add(l); return () => listeners.delete(l); }, () => liveState, () => liveState);
+
+/** Live updates (mounted once in the app shell): refresh cached data and raise configured site alerts. */
+export function useRealtime(onSiteChange?: (oldStatus: string | undefined, site: Site) => void) {
   const qc = useQueryClient();
-  const [lastEvent, setLastEvent] = useState<number | null>(null);
-  const [live, setLive] = useState(false);
+  const cb = useRef(onSiteChange);
+  cb.current = onSiteChange;
   useEffect(() => {
     const ch = supabase
       .channel("ops-live")
-      .on("postgres_changes", { event: "*", schema: "public", table: "ops_sites" }, () => {
+      .on("postgres_changes", { event: "*", schema: "public", table: "ops_sites" }, (p) => {
         qc.invalidateQueries({ queryKey: ["sites"] });
-        setLastEvent(Date.now());
+        setLive({ lastEvent: Date.now() });
+        if (p.eventType === "UPDATE") cb.current?.((p.old as Partial<Site>).status, p.new as Site);
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "ops_tasks" }, () => {
         qc.invalidateQueries({ queryKey: ["tasks"] });
-        setLastEvent(Date.now());
+        setLive({ lastEvent: Date.now() });
       })
-      .on("postgres_changes", { event: "*", schema: "public", table: "ops_task_activity" }, () => {
-        qc.invalidateQueries({ queryKey: ["activity"] });
-      })
-      .subscribe((s) => setLive(s === "SUBSCRIBED"));
-    return () => {
-      supabase.removeChannel(ch);
-    };
+      .on("postgres_changes", { event: "*", schema: "public", table: "ops_task_activity" }, () => qc.invalidateQueries({ queryKey: ["activity"] }))
+      .on("postgres_changes", { event: "*", schema: "public", table: "ops_site_events" }, () => qc.invalidateQueries({ queryKey: ["site-events"] }))
+      .on("postgres_changes", { event: "*", schema: "public", table: "ops_technicians" }, () => qc.invalidateQueries({ queryKey: ["techs"] }))
+      .subscribe((s) => setLive({ live: s === "SUBSCRIBED" }));
+    return () => { supabase.removeChannel(ch); };
   }, [qc]);
-  return { live, lastEvent };
 }
+
+export const useSiteEvents = (siteId?: string | null) =>
+  useQuery({
+    queryKey: ["site-events", siteId ?? "all"],
+    enabled: siteId !== null,
+    queryFn: async () => {
+      let q = supabase.from("ops_site_events").select("*").order("created_at", { ascending: false }).limit(500);
+      if (siteId) q = q.eq("site_id", siteId);
+      return throwing(await q);
+    },
+  });
 
 export async function logActivity(task_id: string, actor: string, message: string, category: Activity["category"]) {
   const { error } = await supabase.from("ops_task_activity").insert({ task_id, actor, message, category });
