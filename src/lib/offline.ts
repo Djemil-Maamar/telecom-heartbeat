@@ -4,10 +4,11 @@ import type { TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 
 /** Field entries made without network are kept in this outbox and replayed in order when the connection returns. */
 type Photo = { name: string; type: string; dataUrl: string };
-export type OutboxOp =
-  | { id: string; at: number; kind: "activity"; row: TablesInsert<"ops_task_activity"> }
-  | { id: string; at: number; kind: "task_update"; taskId: string; patch: TablesUpdate<"ops_tasks"> }
-  | { id: string; at: number; kind: "report"; row: TablesInsert<"ops_field_reports">; photos: Photo[] };
+export type OutboxInput =
+  | { kind: "activity"; row: TablesInsert<"ops_task_activity"> }
+  | { kind: "task_update"; taskId: string; patch: TablesUpdate<"ops_tasks"> }
+  | { kind: "report"; row: TablesInsert<"ops_field_reports">; photos: Photo[] };
+export type OutboxOp = OutboxInput & { id: string; at: number };
 
 const KEY = "ops-outbox";
 const listeners = new Set<() => void>();
@@ -53,7 +54,7 @@ async function execute(op: OutboxOp) {
 }
 
 /** Runs the change now when online; queues it when the network is unavailable. Returns "queued" or "sent". */
-export async function runOrQueue(op: Omit<OutboxOp, "id" | "at"> & Partial<Pick<OutboxOp, "id" | "at">>): Promise<"sent" | "queued"> {
+export async function runOrQueue(op: OutboxInput): Promise<"sent" | "queued"> {
   const full = { id: crypto.randomUUID(), at: Date.now(), ...op } as OutboxOp;
   if (navigator.onLine && read().length === 0) {
     try { await execute(full); return "sent"; } catch (e) { if (!isNetworkError(e)) throw e; }
