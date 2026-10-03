@@ -12,9 +12,11 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedAvailabilityRouteImport } from './routes/_authenticated/availability'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedSitesRouteImport } from './routes/_authenticated/sites'
 import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/team'
+import { Route as AuthenticatedUsersRouteImport } from './routes/_authenticated/users'
 import { Route as AuthenticatedFieldIdRouteImport } from './routes/_authenticated/field.$id'
 import { Route as AuthenticatedTasksIndexRouteImport } from './routes/_authenticated/tasks.index'
 import { Route as AuthenticatedTasksIdRouteImport } from './routes/_authenticated/tasks.$id'
@@ -33,6 +35,12 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAvailabilityRoute =
+  AuthenticatedAvailabilityRouteImport.update({
+    id: '/availability',
+    path: '/availability',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
@@ -46,6 +54,11 @@ const AuthenticatedSitesRoute = AuthenticatedSitesRouteImport.update({
 const AuthenticatedTeamRoute = AuthenticatedTeamRouteImport.update({
   id: '/team',
   path: '/team',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedUsersRoute = AuthenticatedUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedFieldIdRoute = AuthenticatedFieldIdRouteImport.update({
@@ -67,18 +80,22 @@ const AuthenticatedTasksIdRoute = AuthenticatedTasksIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/auth': typeof AuthRoute
+  '/availability': typeof AuthenticatedAvailabilityRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/sites': typeof AuthenticatedSitesRoute
   '/team': typeof AuthenticatedTeamRoute
+  '/users': typeof AuthenticatedUsersRoute
   '/field/$id': typeof AuthenticatedFieldIdRoute
   '/tasks/$id': typeof AuthenticatedTasksIdRoute
   '/tasks/': typeof AuthenticatedTasksIndexRoute
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
+  '/availability': typeof AuthenticatedAvailabilityRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/sites': typeof AuthenticatedSitesRoute
   '/team': typeof AuthenticatedTeamRoute
+  '/users': typeof AuthenticatedUsersRoute
   '/': typeof AuthenticatedIndexRoute
   '/field/$id': typeof AuthenticatedFieldIdRoute
   '/tasks/$id': typeof AuthenticatedTasksIdRoute
@@ -88,9 +105,11 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/availability': typeof AuthenticatedAvailabilityRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/sites': typeof AuthenticatedSitesRoute
   '/_authenticated/team': typeof AuthenticatedTeamRoute
+  '/_authenticated/users': typeof AuthenticatedUsersRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/field/$id': typeof AuthenticatedFieldIdRoute
   '/_authenticated/tasks/$id': typeof AuthenticatedTasksIdRoute
@@ -101,18 +120,22 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/availability'
     | '/reports'
     | '/sites'
     | '/team'
+    | '/users'
     | '/field/$id'
     | '/tasks/$id'
     | '/tasks/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/auth'
+    | '/availability'
     | '/reports'
     | '/sites'
     | '/team'
+    | '/users'
     | '/'
     | '/field/$id'
     | '/tasks/$id'
@@ -121,9 +144,11 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/availability'
     | '/_authenticated/reports'
     | '/_authenticated/sites'
     | '/_authenticated/team'
+    | '/_authenticated/users'
     | '/_authenticated/'
     | '/_authenticated/field/$id'
     | '/_authenticated/tasks/$id'
@@ -158,6 +183,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/availability': {
+      id: '/_authenticated/availability'
+      path: '/availability'
+      fullPath: '/availability'
+      preLoaderRoute: typeof AuthenticatedAvailabilityRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/reports': {
       id: '/_authenticated/reports'
       path: '/reports'
@@ -177,6 +209,13 @@ declare module '@tanstack/react-router' {
       path: '/team'
       fullPath: '/team'
       preLoaderRoute: typeof AuthenticatedTeamRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/users': {
+      id: '/_authenticated/users'
+      path: '/users'
+      fullPath: '/users'
+      preLoaderRoute: typeof AuthenticatedUsersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/field/$id': {
@@ -204,9 +243,11 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAvailabilityRoute: typeof AuthenticatedAvailabilityRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedSitesRoute: typeof AuthenticatedSitesRoute
   AuthenticatedTeamRoute: typeof AuthenticatedTeamRoute
+  AuthenticatedUsersRoute: typeof AuthenticatedUsersRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedFieldIdRoute: typeof AuthenticatedFieldIdRoute
   AuthenticatedTasksIdRoute: typeof AuthenticatedTasksIdRoute
@@ -214,9 +255,11 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAvailabilityRoute: AuthenticatedAvailabilityRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedSitesRoute: AuthenticatedSitesRoute,
   AuthenticatedTeamRoute: AuthenticatedTeamRoute,
+  AuthenticatedUsersRoute: AuthenticatedUsersRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedFieldIdRoute: AuthenticatedFieldIdRoute,
   AuthenticatedTasksIdRoute: AuthenticatedTasksIdRoute,
