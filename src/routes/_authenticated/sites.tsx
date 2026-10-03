@@ -64,8 +64,9 @@ function SitesPage() {
   const selected = sites.find((s) => s.id === selectedId) ?? null;
   const siteTasks = tasks.filter((t) => t.site_id === selectedId && ACTIVE.includes(t.status));
   const nearest = useMemo(
-    () => (selected ? techs.filter((t) => t.availability !== "off_duty").map((t) => ({ t, d: distanceKm(selected, t) })).sort((a, b) => a.d - b.d).slice(0, 3) : []),
-    [selected, techs],
+    () => (selected ? techs.filter((t) => t.availability !== "off_duty").map((t) => ({ t, d: distanceKm(selected, t) })).sort((a, b) => a.d - b.d).slice(0, 3)
+      .map((x) => ({ ...x, conflicts: techConflicts(x.t.id, Date.now(), Date.now() + (SLA_HOURS[selected.status === "alarm" ? "critical" : "medium"] ?? 4) * 3600_000, blocks, tasks) })) : []),
+    [selected, techs, blocks, tasks],
   );
   const { data: events = [] } = useSiteEvents(selectedId);
   const allSiteTasks = tasks.filter((t) => t.site_id === selectedId);
