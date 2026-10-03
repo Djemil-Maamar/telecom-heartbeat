@@ -5,7 +5,8 @@ import { ArrowLeft, Camera, Check } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Panel } from "@/components/AppShell";
-import { fmtTime, logActivity, useTasks } from "@/lib/ops";
+import { fmtTime, logActivity, useMe, useTasks } from "@/lib/ops";
+import { fileToPhoto, runOrQueue } from "@/lib/offline";
 
 export const Route = createFileRoute("/_authenticated/field/$id")({
   head: () => ({
@@ -31,7 +32,9 @@ function FieldSheet() {
   const qc = useQueryClient();
   const task = tasks?.find((t) => t.id === id);
   const items: string[] = CHECKLISTS[task?.type ?? "GPM"] ?? [];
+  const { data: me } = useMe();
   const [tech, setTech] = useState("");
+  const techName = tech || (me?.email?.split("@")[0] ?? "");
   const [hours, setHours] = useState("");
   const [fuel, setFuel] = useState(50);
   const [volts, setVolts] = useState("");
@@ -57,25 +60,23 @@ function FieldSheet() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!tech.trim()) { toast.error("Nom du technicien requis"); return; }
+    const tech_ = techName; if (!tech_.trim()) { toast.error("Nom du technicien requis"); return; }
     setSaving(true);
     try {
-      const photos: string[] = [];
-      for (const f of files) {
-        const path = `${id}/${Date.now()}-${f.name.replace(/[^\w.-]/g, "_")}`;
-        const { error } = await supabase.storage.from("field-photos").upload(path, f, { contentType: f.type });
-        if (error) throw error;
-        photos.push(path);
-      }
-      const { error } = await supabase.from("ops_field_reports").insert({
-        task_id: id, technician_name: tech.trim(), notes,
-        hour_meter: hours ? Number(hours) : null, fuel_level_pct: isGpm ? fuel : null, battery_voltage: volts ? Number(volts) : null,
-        checklist: checked, photos,
+      const photos = await Promise.all(files.map(fileToPhoto));
+      const res = await runOrQueue({
+        kind: "report",
+        row: {
+          task_id: id, technician_name: techName.trim(), notes,
+          hour_meter: hours ? Number(hours) : null, fuel_level_pct: isGpm ? fuel : null, battery_voltage: volts ? Number(volts) : null,
+          checklist: checked, photos: [],
+        },
+        photos,
       });
-      if (error) throw error;
       const done = items.filter((i) => checked[i]).length;
-      await logActivity(id, tech.trim(), `Fiche terrain soumise : ${done}/${items.length} points${hours ? `, compteur ${hours} h` : ""}${isGpm ? `, carburant ${fuel}%` : ""}${volts ? `, batterie ${volts} V` : ""}${photos.length ? `, ${photos.length} photo(s)` : ""}.`, "field_update");
-      toast.success("Fiche enregistrée");
+      await logActivity(id, techName.trim(), `Fiche terrain soumise : ${done}/${items.length} points${hours ? `, compteur ${hours} h` : ""}${isGpm ? `, carburant ${fuel}%` : ""}${volts ? `, batterie ${volts} V` : ""}${photos.length ? `, ${photos.length} photo(s)` : ""}.`, "field_update");
+      if (res === "queued") toast.info("Hors ligne : fiche enregistrée sur l'appareil, envoi automatique au retour du réseau");
+      if (res === "sent") toast.success("Fiche enregistrée");
       setChecked({}); setFiles([]); setNotes("");
       qc.invalidateQueries();
     } catch (err) {
@@ -94,7 +95,7 @@ function FieldSheet() {
 
       <form onSubmit={submit} className="mt-5 space-y-4">
         <Panel className="space-y-3 p-4">
-          <input value={tech} onChange={(e) => setTech(e.target.value)} placeholder="Technicien / indicatif" className="h-12 w-full rounded-lg border bg-card px-3 text-base" />
+          <input value={techName} onChange={(e) => setTech(e.target.value)} placeholder="Technicien / indicatif" className="h-12 w-full rounded-lg border bg-card px-3 text-base" />
           <div className="grid grid-cols-2 gap-3">
             <label><span className="eyebrow">Compteur horaire (h)</span>
               <input inputMode="decimal" value={hours} onChange={(e) => setHours(e.target.value)} className="mt-1 h-12 w-full rounded-lg border bg-card px-3 text-base" placeholder="ex. 12450" /></label>
