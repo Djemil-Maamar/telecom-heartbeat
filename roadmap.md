@@ -1,14 +1,5 @@
 # Roadmap
-- [x] Database: sites (coords, status, last alert), technicians (coords), tasks, activity, GPM checklists + seed
-- [x] App shell (sidebar, header) matching screenshots
-- [x] Overview "Shift at a glance"
-- [x] Network map: colored markers, site popup (name, status, last alert, dispatch info), status filters + legend, mobile-friendly, nearest technician assignment
-- [x] SLA countdown per criticality + escalation alerts
-- [x] Work orders list + task detail
-- [x] Field intervention sheet / GPM mobile checklist (hour meter, fuel, battery voltage, photos)
-- [x] Field team page
-- [x] Map: realtime site status + last updated time; search by site name/code and center map
-- [x] Map: marker clustering; geographic zones per intervention sector; assign + track from site card
-- [x] Configurable alerts when site goes down / back to normal
-- [x] Site card: chronological history of status changes and interventions
-- [x] Report export (site statuses + interventions by period)
+- [x] Live map, SLA, field sheet, alerts, history, reports (previous turn)
+- [ ] Sign-in + roles (admin / supervisor / technician) with matching rights on sites & interventions
+- [ ] Technician availability calendar + conflict detection at assignment
+- [ ] Mobile-first site card and intervention tracking (bottom nav, bottom sheet, large touch targets)
