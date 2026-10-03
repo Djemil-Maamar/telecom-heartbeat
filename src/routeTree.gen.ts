@@ -9,180 +9,180 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as ReportsRouteImport } from './routes/reports'
-import { Route as SitesRouteImport } from './routes/sites'
-import { Route as TeamRouteImport } from './routes/team'
-import { Route as FieldIdRouteImport } from './routes/field.$id'
-import { Route as TasksIndexRouteImport } from './routes/tasks.index'
-import { Route as TasksIdRouteImport } from './routes/tasks.$id'
+import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
+import { Route as AuthenticatedSitesRouteImport } from './routes/_authenticated/sites'
+import { Route as AuthenticatedTeamRouteImport } from './routes/_authenticated/team'
+import { Route as AuthenticatedFieldIdRouteImport } from './routes/_authenticated/field.$id'
+import { Route as AuthenticatedTasksIndexRouteImport } from './routes/_authenticated/tasks.index'
+import { Route as AuthenticatedTasksIdRouteImport } from './routes/_authenticated/tasks.$id'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
+const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
+  id: '/_authenticated/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ReportsRoute = ReportsRouteImport.update({
-  id: '/reports',
+const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
+  id: '/_authenticated/reports',
   path: '/reports',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SitesRoute = SitesRouteImport.update({
-  id: '/sites',
+const AuthenticatedSitesRoute = AuthenticatedSitesRouteImport.update({
+  id: '/_authenticated/sites',
   path: '/sites',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TeamRoute = TeamRouteImport.update({
-  id: '/team',
+const AuthenticatedTeamRoute = AuthenticatedTeamRouteImport.update({
+  id: '/_authenticated/team',
   path: '/team',
   getParentRoute: () => rootRouteImport,
 } as any)
-const FieldIdRoute = FieldIdRouteImport.update({
-  id: '/field/$id',
+const AuthenticatedFieldIdRoute = AuthenticatedFieldIdRouteImport.update({
+  id: '/_authenticated/field/$id',
   path: '/field/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TasksIndexRoute = TasksIndexRouteImport.update({
-  id: '/tasks/',
+const AuthenticatedTasksIndexRoute = AuthenticatedTasksIndexRouteImport.update({
+  id: '/_authenticated/tasks/',
   path: '/tasks/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TasksIdRoute = TasksIdRouteImport.update({
-  id: '/tasks/$id',
+const AuthenticatedTasksIdRoute = AuthenticatedTasksIdRouteImport.update({
+  id: '/_authenticated/tasks/$id',
   path: '/tasks/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/reports': typeof ReportsRoute
-  '/sites': typeof SitesRoute
-  '/team': typeof TeamRoute
-  '/field/$id': typeof FieldIdRoute
-  '/tasks/$id': typeof TasksIdRoute
-  '/tasks/': typeof TasksIndexRoute
+  '/reports': typeof AuthenticatedReportsRoute
+  '/sites': typeof AuthenticatedSitesRoute
+  '/team': typeof AuthenticatedTeamRoute
+  '/': typeof AuthenticatedIndexRoute
+  '/field/$id': typeof AuthenticatedFieldIdRoute
+  '/tasks/$id': typeof AuthenticatedTasksIdRoute
+  '/tasks/': typeof AuthenticatedTasksIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/reports': typeof ReportsRoute
-  '/sites': typeof SitesRoute
-  '/team': typeof TeamRoute
-  '/field/$id': typeof FieldIdRoute
-  '/tasks/$id': typeof TasksIdRoute
-  '/tasks': typeof TasksIndexRoute
+  '/reports': typeof AuthenticatedReportsRoute
+  '/sites': typeof AuthenticatedSitesRoute
+  '/team': typeof AuthenticatedTeamRoute
+  '/': typeof AuthenticatedIndexRoute
+  '/field/$id': typeof AuthenticatedFieldIdRoute
+  '/tasks/$id': typeof AuthenticatedTasksIdRoute
+  '/tasks': typeof AuthenticatedTasksIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/reports': typeof ReportsRoute
-  '/sites': typeof SitesRoute
-  '/team': typeof TeamRoute
-  '/field/$id': typeof FieldIdRoute
-  '/tasks/$id': typeof TasksIdRoute
-  '/tasks/': typeof TasksIndexRoute
+  '/_authenticated/reports': typeof AuthenticatedReportsRoute
+  '/_authenticated/sites': typeof AuthenticatedSitesRoute
+  '/_authenticated/team': typeof AuthenticatedTeamRoute
+  '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/field/$id': typeof AuthenticatedFieldIdRoute
+  '/_authenticated/tasks/$id': typeof AuthenticatedTasksIdRoute
+  '/_authenticated/tasks/': typeof AuthenticatedTasksIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
     | '/reports'
     | '/sites'
     | '/team'
+    | '/'
     | '/field/$id'
     | '/tasks/$id'
     | '/tasks/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
     | '/reports'
     | '/sites'
     | '/team'
+    | '/'
     | '/field/$id'
     | '/tasks/$id'
     | '/tasks'
   id:
     | '__root__'
-    | '/'
-    | '/reports'
-    | '/sites'
-    | '/team'
-    | '/field/$id'
-    | '/tasks/$id'
-    | '/tasks/'
+    | '/_authenticated/reports'
+    | '/_authenticated/sites'
+    | '/_authenticated/team'
+    | '/_authenticated/'
+    | '/_authenticated/field/$id'
+    | '/_authenticated/tasks/$id'
+    | '/_authenticated/tasks/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  ReportsRoute: typeof ReportsRoute
-  SitesRoute: typeof SitesRoute
-  TeamRoute: typeof TeamRoute
-  FieldIdRoute: typeof FieldIdRoute
-  TasksIdRoute: typeof TasksIdRoute
-  TasksIndexRoute: typeof TasksIndexRoute
+  AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
+  AuthenticatedSitesRoute: typeof AuthenticatedSitesRoute
+  AuthenticatedTeamRoute: typeof AuthenticatedTeamRoute
+  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedFieldIdRoute: typeof AuthenticatedFieldIdRoute
+  AuthenticatedTasksIdRoute: typeof AuthenticatedTasksIdRoute
+  AuthenticatedTasksIndexRoute: typeof AuthenticatedTasksIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
+    '/_authenticated/': {
+      id: '/_authenticated/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+      preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/reports': {
-      id: '/reports'
+    '/_authenticated/reports': {
+      id: '/_authenticated/reports'
       path: '/reports'
       fullPath: '/reports'
-      preLoaderRoute: typeof ReportsRouteImport
+      preLoaderRoute: typeof AuthenticatedReportsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/sites': {
-      id: '/sites'
+    '/_authenticated/sites': {
+      id: '/_authenticated/sites'
       path: '/sites'
       fullPath: '/sites'
-      preLoaderRoute: typeof SitesRouteImport
+      preLoaderRoute: typeof AuthenticatedSitesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/team': {
-      id: '/team'
+    '/_authenticated/team': {
+      id: '/_authenticated/team'
       path: '/team'
       fullPath: '/team'
-      preLoaderRoute: typeof TeamRouteImport
+      preLoaderRoute: typeof AuthenticatedTeamRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/field/$id': {
-      id: '/field/$id'
+    '/_authenticated/field/$id': {
+      id: '/_authenticated/field/$id'
       path: '/field/$id'
       fullPath: '/field/$id'
-      preLoaderRoute: typeof FieldIdRouteImport
+      preLoaderRoute: typeof AuthenticatedFieldIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/tasks/': {
-      id: '/tasks/'
+    '/_authenticated/tasks/': {
+      id: '/_authenticated/tasks/'
       path: '/tasks'
       fullPath: '/tasks/'
-      preLoaderRoute: typeof TasksIndexRouteImport
+      preLoaderRoute: typeof AuthenticatedTasksIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/tasks/$id': {
-      id: '/tasks/$id'
+    '/_authenticated/tasks/$id': {
+      id: '/_authenticated/tasks/$id'
       path: '/tasks/$id'
       fullPath: '/tasks/$id'
-      preLoaderRoute: typeof TasksIdRouteImport
+      preLoaderRoute: typeof AuthenticatedTasksIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  ReportsRoute: ReportsRoute,
-  SitesRoute: SitesRoute,
-  TeamRoute: TeamRoute,
-  FieldIdRoute: FieldIdRoute,
-  TasksIdRoute: TasksIdRoute,
-  TasksIndexRoute: TasksIndexRoute,
+  AuthenticatedReportsRoute: AuthenticatedReportsRoute,
+  AuthenticatedSitesRoute: AuthenticatedSitesRoute,
+  AuthenticatedTeamRoute: AuthenticatedTeamRoute,
+  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedFieldIdRoute: AuthenticatedFieldIdRoute,
+  AuthenticatedTasksIdRoute: AuthenticatedTasksIdRoute,
+  AuthenticatedTasksIndexRoute: AuthenticatedTasksIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
