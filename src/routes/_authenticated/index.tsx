@@ -7,7 +7,7 @@ import { PageHead, Panel } from "@/components/AppShell";
 import { SlaBadge } from "@/components/SlaBadge";
 import { ACTIVE, SITE_STATUS, fmtTime, logActivity, sla, statusLabel, useActivity, useNow, useSites, useTasks, type SiteStatus } from "@/lib/ops";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
     meta: [
       { title: "Shift at a glance — GSM O&M" },

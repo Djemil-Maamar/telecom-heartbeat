@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Panel } from "@/components/AppShell";
 import { fmtTime, logActivity, useTasks } from "@/lib/ops";
 
-export const Route = createFileRoute("/field/$id")({
+export const Route = createFileRoute("/_authenticated/field/$id")({
   head: () => ({
     meta: [
       { title: "Fiche d'intervention terrain — GSM O&M" },

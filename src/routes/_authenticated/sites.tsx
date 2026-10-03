@@ -13,7 +13,7 @@ import {
 
 const SiteMap = lazy(() => import("@/components/SiteMap"));
 
-export const Route = createFileRoute("/sites")({
+export const Route = createFileRoute("/_authenticated/sites")({
   head: () => ({
     meta: [
       { title: "Network sites map — GSM O&M" },

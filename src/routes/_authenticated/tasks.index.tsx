@@ -4,7 +4,7 @@ import { PageHead, Panel } from "@/components/AppShell";
 import { SlaBadge } from "@/components/SlaBadge";
 import { TASK_STATUSES, statusLabel, useNow, useTasks } from "@/lib/ops";
 
-export const Route = createFileRoute("/tasks/")({
+export const Route = createFileRoute("/_authenticated/tasks/")({
   head: () => ({
     meta: [
       { title: "Work orders — GSM O&M" },

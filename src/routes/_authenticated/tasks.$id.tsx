@@ -8,7 +8,7 @@ import { PageHead, Panel } from "@/components/AppShell";
 import { SlaBadge } from "@/components/SlaBadge";
 import { TASK_STATUSES, fmtTime, logActivity, statusLabel, useActivity, useNow, useTasks, useTechs, type Task } from "@/lib/ops";
 
-export const Route = createFileRoute("/tasks/$id")({
+export const Route = createFileRoute("/_authenticated/tasks/$id")({
   head: () => ({
     meta: [
       { title: "Task detail — GSM O&M" },

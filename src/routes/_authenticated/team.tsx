@@ -3,7 +3,7 @@ import { Phone } from "lucide-react";
 import { PageHead, Panel } from "@/components/AppShell";
 import { ACTIVE, useTasks, useTechs } from "@/lib/ops";
 
-export const Route = createFileRoute("/team")({
+export const Route = createFileRoute("/_authenticated/team")({
   head: () => ({
     meta: [
       { title: "Field team — GSM O&M" },
