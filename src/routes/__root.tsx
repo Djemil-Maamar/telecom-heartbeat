@@ -1,4 +1,6 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { QueryClient } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import {
   Outlet,
   Link,
@@ -79,6 +81,8 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+const persister = createSyncStoragePersister({ storage: typeof window !== "undefined" ? window.localStorage : undefined, key: "ops-cache" });
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
@@ -91,9 +95,9 @@ function RootComponent() {
     return () => data.subscription.unsubscribe();
   }, [router, queryClient]);
   return (
-    <QueryClientProvider client={queryClient}>
+    <PersistQueryClientProvider client={queryClient} persistOptions={{ persister, maxAge: 7 * 24 * 3600_000, buster: "v2" }}>
       <Outlet />
       <Toaster />
-    </QueryClientProvider>
+    </PersistQueryClientProvider>
   );
 }

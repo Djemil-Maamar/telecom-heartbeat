@@ -2,7 +2,9 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { Activity, CalendarDays, ClipboardList, FileBarChart, LogOut, MapPinned, Radio, ShieldCheck, Users } from "lucide-react";
 import { toast } from "sonner";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { CloudOff, RefreshCw } from "lucide-react";
+import { flushOutbox, useOutbox } from "@/lib/offline";
 import { supabase } from "@/integrations/supabase/client";
 import { useRealtime, useLiveState, useTasks, useMe, ACTIVE, loadPrefs, type Role } from "@/lib/ops";
 
@@ -31,6 +33,22 @@ export function AppShell({ children }: { children: ReactNode }) {
     else if (site.status === "normal" && p.restored) toast.success(`${site.code} · ${site.name} de retour à la normale`);
   });
   const { live } = useLiveState();
+  const outbox = useOutbox();
+  const [online, setOnline] = useState(true);
+  useEffect(() => {
+    const sync = () => flushOutbox((sent, rejected) => {
+      if (sent) toast.success(`${sent} saisie(s) hors ligne synchronisée(s)`);
+      rejected.forEach((r) => toast.error(`Saisie refusée : ${r}`));
+      qc.invalidateQueries();
+    });
+    const up = () => { setOnline(true); sync(); };
+    const down = () => setOnline(false);
+    setOnline(navigator.onLine);
+    sync();
+    window.addEventListener("online", up);
+    window.addEventListener("offline", down);
+    return () => { window.removeEventListener("online", up); window.removeEventListener("offline", down); };
+  }, [qc]);
   const { data: tasks } = useTasks();
   const overdue = (tasks ?? []).filter((t) => ACTIVE.includes(t.status) && t.due_at && new Date(t.due_at).getTime() < Date.now()).length;
   const items = NAV.filter((n) => !n.roles || n.roles.some((r) => me?.roles.includes(r)));
@@ -80,6 +98,13 @@ export function AppShell({ children }: { children: ReactNode }) {
             <button onClick={signOut} aria-label="Se déconnecter" className="rounded-md p-2 hover:bg-muted"><LogOut className="size-4" /></button>
           </div>
         </header>
+        {(!online || outbox.length > 0) && (
+          <div className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold md:px-8 ${online ? "bg-warn/20" : "bg-crit/15 text-crit"}`}>
+            {online ? <RefreshCw className="size-4 animate-spin" /> : <CloudOff className="size-4" />}
+            {online ? `Synchronisation de ${outbox.length} saisie(s)…` : `Hors ligne — données en cache${outbox.length ? ` · ${outbox.length} saisie(s) en attente` : ""}`}
+            {online && outbox.length > 0 && <button onClick={() => flushOutbox(() => qc.invalidateQueries())} className="ml-auto underline">Réessayer</button>}
+          </div>
+        )}
         <div className="mx-auto max-w-7xl px-4 py-5 md:px-8 md:py-8">
           {me && me.roles.length === 0 ? (
             <div className="rounded-xl border bg-card p-6 text-sm">

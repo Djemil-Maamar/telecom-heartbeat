@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
+import { runOrQueue } from "@/lib/offline";
 
 export type Site = Tables<"ops_sites">;
 export type Technician = Tables<"ops_technicians">;
@@ -144,8 +145,7 @@ export const useSiteEvents = (siteId?: string | null) =>
   });
 
 export async function logActivity(task_id: string, actor: string, message: string, category: Activity["category"]) {
-  const { error } = await supabase.from("ops_task_activity").insert({ task_id, actor, message, category });
-  if (error) throw new Error(error.message);
+  return runOrQueue({ kind: "activity", row: { task_id, actor, message, category } });
 }
 
 /** Current account: roles + linked technician. Rights are enforced by the database; this only drives the UI. */
