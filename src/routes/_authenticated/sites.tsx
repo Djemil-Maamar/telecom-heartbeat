@@ -1,5 +1,5 @@
 import { createFileRoute, ClientOnly, Link } from "@tanstack/react-router";
-import { lazy, Suspense, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Search, X, Navigation, Phone, Clock, Radio } from "lucide-react";
 import { toast } from "sonner";
@@ -7,13 +7,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { PageHead, Panel } from "@/components/AppShell";
 import { SlaBadge } from "@/components/SlaBadge";
 import {
-  ACTIVE, SITE_STATUS, statusLabel, distanceKm, fmtTime, logActivity, useNow, useLiveState, useSiteEvents, useSites, useTasks, useTechs,
+  ACTIVE, SITE_STATUS, SLA_HOURS, techConflicts, useAvailability, useMe, statusLabel, distanceKm, fmtTime, logActivity, useNow, useLiveState, useSiteEvents, useSites, useTasks, useTechs,
   type SiteStatus,
 } from "@/lib/ops";
 
 const SiteMap = lazy(() => import("@/components/SiteMap"));
 
-export const Route = createFileRoute("/sites")({
+export const Route = createFileRoute("/_authenticated/sites")({
   head: () => ({
     meta: [
       { title: "Network sites map — GSM O&M" },
@@ -39,6 +39,23 @@ function SitesPage() {
   const [zones, setZones] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [focus, setFocus] = useState<{ lat: number; lng: number; key: number } | null>(null);
+  const { data: me } = useMe();
+  const { data: blocks = [] } = useAvailability();
+  const canDispatch = !!me?.isDispatcher;
+  const [prefsLoaded, setPrefsLoaded] = useState(false);
+
+  // Remember filters and zone toggle between visits (map area is remembered by the map itself).
+  useEffect(() => {
+    try {
+      const v = JSON.parse(localStorage.getItem("ops-map-prefs") ?? "{}");
+      if (Array.isArray(v.filters)) setFilters(new Set(v.filters.filter((x: string) => STATUSES.includes(x as SiteStatus))));
+      if (typeof v.zones === "boolean") setZones(v.zones);
+    } catch { /* ignore */ }
+    setPrefsLoaded(true);
+  }, []);
+  useEffect(() => {
+    if (prefsLoaded) localStorage.setItem("ops-map-prefs", JSON.stringify({ filters: [...filters], zones }));
+  }, [filters, zones, prefsLoaded]);
 
   const visible = sites.filter((s) => filters.has(s.status as SiteStatus));
   const matches = query.trim()
@@ -47,8 +64,9 @@ function SitesPage() {
   const selected = sites.find((s) => s.id === selectedId) ?? null;
   const siteTasks = tasks.filter((t) => t.site_id === selectedId && ACTIVE.includes(t.status));
   const nearest = useMemo(
-    () => (selected ? techs.filter((t) => t.availability !== "off_duty").map((t) => ({ t, d: distanceKm(selected, t) })).sort((a, b) => a.d - b.d).slice(0, 3) : []),
-    [selected, techs],
+    () => (selected ? techs.filter((t) => t.availability !== "off_duty").map((t) => ({ t, d: distanceKm(selected, t) })).sort((a, b) => a.d - b.d).slice(0, 3)
+      .map((x) => ({ ...x, conflicts: techConflicts(x.t.id, Date.now(), Date.now() + (SLA_HOURS[selected.status === "alarm" ? "critical" : "medium"] ?? 4) * 3600_000, blocks, tasks) })) : []),
+    [selected, techs, blocks, tasks],
   );
   const { data: events = [] } = useSiteEvents(selectedId);
   const allSiteTasks = tasks.filter((t) => t.site_id === selectedId);
@@ -83,6 +101,8 @@ function SitesPage() {
 
   async function assign(techId: string, techName: string) {
     if (!selected) return;
+    const c = techConflicts(techId, Date.now(), Date.now() + 4 * 3600_000, blocks, tasks);
+    if (c.length && !confirm(`${techName} a un conflit :\n- ${c.join("\n- ")}\n\nAssigner quand même ?`)) return;
     try {
       let task = siteTasks.sort((a, b) => ["critical", "high", "medium", "low"].indexOf(a.priority) - ["critical", "high", "medium", "low"].indexOf(b.priority))[0];
       if (!task) {
@@ -179,12 +199,13 @@ function SitesPage() {
         <Panel className="relative h-[60vh] overflow-hidden lg:h-[640px]">
           <ClientOnly fallback={<div className="grid h-full place-items-center text-sm text-muted-foreground">Chargement de la carte…</div>}>
             <Suspense fallback={<div className="grid h-full place-items-center text-sm text-muted-foreground">Chargement de la carte…</div>}>
-              <SiteMap sites={visible} allSites={sites} showZones={zones} techs={techs} selectedId={selectedId} focus={focus} onSelect={select} />
+              <SiteMap persistKey="ops-map-view" sites={visible} allSites={sites} showZones={zones} techs={techs} selectedId={selectedId} focus={focus} onSelect={select} />
             </Suspense>
           </ClientOnly>
         </Panel>
 
-        <Panel className="p-5 lg:max-h-[640px] lg:overflow-y-auto">
+        <Panel className={`p-4 md:p-5 lg:static lg:max-h-[640px] lg:overflow-y-auto lg:rounded-xl lg:shadow-none ${selected ? "fixed inset-x-0 bottom-14 z-[1050] max-h-[70vh] overflow-y-auto rounded-b-none rounded-t-2xl shadow-2xl md:bottom-0" : ""}`}>
+          {selected && <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-border lg:hidden" />}
           {!selected ? (
             <div className="space-y-3">
               <h2 className="font-semibold">Sites en alerte</h2>
@@ -207,16 +228,17 @@ function SitesPage() {
                   <h2 className="text-lg font-bold">{selected.name}</h2>
                   <div className="text-xs text-muted-foreground">{selected.region} · {selected.state}</div>
                 </div>
-                <button onClick={() => setSelectedId(null)} aria-label="Fermer" className="rounded-md p-2 hover:bg-muted"><X className="size-4" /></button>
+                <button onClick={() => setSelectedId(null)} aria-label="Fermer" className="grid size-10 place-items-center rounded-md hover:bg-muted"><X className="size-4" /></button>
               </div>
-              <div className="flex flex-wrap gap-2">
+              {canDispatch && <div className="flex flex-wrap gap-2">
                 {STATUSES.map((st) => (
                   <button key={st} onClick={() => setStatus(st)}
                     className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium ${selected.status === st ? "ring-2 ring-ring" : "opacity-70"}`}>
                     <span className={`size-2 rounded-full ${SITE_STATUS[st].cls}`} />{SITE_STATUS[st].label}
                   </button>
                 ))}
-              </div>
+              </div>}
+              {!canDispatch && <span className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold ${SITE_STATUS[selected.status as SiteStatus].text}`}><span className={`size-2 rounded-full ${SITE_STATUS[selected.status as SiteStatus].cls}`} />{SITE_STATUS[selected.status as SiteStatus].label}</span>}
               <dl className="grid grid-cols-2 gap-3 text-sm">
                 <div className="col-span-2"><dt className="eyebrow">Dernière alerte</dt><dd className="font-medium">{selected.last_alert ?? "Aucune"} <span className="text-xs text-muted-foreground">{fmtTime(selected.last_alert_at)}</span></dd></div>
                 <div><dt className="eyebrow">Équipement</dt><dd>{selected.equipment ?? "—"}</dd></div>
@@ -239,26 +261,27 @@ function SitesPage() {
                 ))}
               </div>
 
-              <AssignBox techs={techs} onAssign={assign} />
-              <div>
+              {canDispatch && <AssignBox techs={techs} onAssign={assign} />}
+              {canDispatch && <div>
                 <h3 className="eyebrow mb-2">Techniciens les plus proches</h3>
-                {nearest.map(({ t, d }, i) => (
+                {nearest.map(({ t, d, conflicts }, i) => (
                   <div key={t.id} className="mb-2 flex items-center gap-3 rounded-lg border p-2.5">
                     <div className="min-w-0 flex-1">
                       <div className="text-sm font-semibold">{t.name} <span className="font-mono text-xs text-muted-foreground">{t.call_sign}</span></div>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <Navigation className="size-3" />{d.toFixed(1)} km · {t.availability.replace("_", " ")}
+                        {conflicts.length > 0 && <span className="font-semibold text-crit" title={conflicts.join("\n")}>Conflit</span>}
                         {t.phone && <a href={`tel:${t.phone}`} className="inline-flex items-center gap-1 text-primary"><Phone className="size-3" />Appeler</a>}
                       </div>
                     </div>
                     <button onClick={() => assign(t.id, t.name)}
-                      className={`rounded-md px-3 py-2 text-xs font-semibold ${i === 0 ? "bg-primary text-primary-foreground" : "border"}`}>
+                      className={`min-h-10 rounded-md px-3 text-xs font-semibold ${i === 0 && !conflicts.length ? "bg-primary text-primary-foreground" : "border"}`}>
                       Assigner
                     </button>
                   </div>
                 ))}
                 {nearest.length === 0 && <p className="text-xs text-muted-foreground">Aucun technicien disponible.</p>}
-              </div>
+              </div>}
               <div>
                 <h3 className="eyebrow mb-2">Historique</h3>
                 <ol className="space-y-2 border-l pl-3">

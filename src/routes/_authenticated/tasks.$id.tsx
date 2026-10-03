@@ -6,9 +6,10 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHead, Panel } from "@/components/AppShell";
 import { SlaBadge } from "@/components/SlaBadge";
-import { TASK_STATUSES, fmtTime, logActivity, statusLabel, useActivity, useNow, useTasks, useTechs, type Task } from "@/lib/ops";
+import { SLA_HOURS, TASK_STATUSES, fmtTime, logActivity, statusLabel, techConflicts, useActivity, useAvailability, useMe, useNow, useTasks, useTechs, type Task } from "@/lib/ops";
+import { runOrQueue } from "@/lib/offline";
 
-export const Route = createFileRoute("/tasks/$id")({
+export const Route = createFileRoute("/_authenticated/tasks/$id")({
   head: () => ({
     meta: [
       { title: "Task detail — GSM O&M" },
@@ -31,15 +32,22 @@ function TaskDetail() {
   const [actor, setActor] = useState("");
   const [cat, setCat] = useState<"field_update" | "note">("field_update");
   const [msg, setMsg] = useState("");
+  const { data: me } = useMe();
+  const { data: blocks = [] } = useAvailability();
   const task = tasks?.find((t) => t.id === id);
   if (isLoading) return <p className="text-sm text-muted-foreground">Loading…</p>;
   if (!task) return <p>Work order not found. <Link to="/tasks" className="text-primary">Back</Link></p>;
 
   async function update(patch: Partial<Task>, note?: string) {
-    const { error } = await supabase.from("ops_tasks").update({ ...patch, ...(patch.status === "completed" ? { completed_at: new Date().toISOString() } : {}) }).eq("id", id);
-    if (error) { toast.error(error.message); return; }
-    if (note) await logActivity(id, "Operations Desk", note, "status_change");
-    qc.invalidateQueries();
+    try {
+      const full = { ...patch, ...(patch.status === "completed" ? { completed_at: new Date().toISOString() } : {}) };
+      // Optimistic cache update so the change is visible immediately, even offline.
+      qc.setQueryData<typeof tasks>(["tasks"], (old) => old?.map((t) => (t.id === id ? { ...t, ...full } : t)));
+      const res = await runOrQueue({ kind: "task_update", taskId: id, patch: full });
+      if (note) await logActivity(id, me?.email?.split("@")[0] ?? "Operations Desk", note, "status_change");
+      if (res === "queued") toast.info("Hors ligne : changement enregistré, synchronisation au retour du réseau");
+      else qc.invalidateQueries();
+    } catch (e) { toast.error((e as Error).message); qc.invalidateQueries(); }
   }
 
   return (
@@ -66,11 +74,11 @@ function TaskDetail() {
             <div className="mt-4 flex flex-wrap gap-2">
               {TASK_STATUSES.filter((s) => s !== "new").map((s) => (
                 <button key={s} onClick={() => update({ status: s }, `Status changed to ${statusLabel(s)}.`)}
-                  className={`rounded-md border px-3 py-2 text-xs font-semibold capitalize ${task.status === s ? "bg-primary text-primary-foreground" : ""}`}>{statusLabel(s)}</button>
+                  className={`min-h-11 flex-1 rounded-md border px-3 py-2 text-xs font-semibold capitalize sm:flex-none ${task.status === s ? "bg-primary text-primary-foreground" : ""}`}>{statusLabel(s)}</button>
               ))}
-              <Link to="/field/$id" params={{ id }} className="flex items-center gap-1 rounded-md bg-accent px-3 py-2 text-xs font-semibold text-accent-foreground"><ClipboardCheck className="size-4" />Fiche d'intervention</Link>
-              <button onClick={async () => { if (!confirm("Delete this work order?")) return; await supabase.from("ops_tasks").delete().eq("id", id); qc.invalidateQueries(); nav({ to: "/tasks" }); }}
-                className="ml-auto flex items-center gap-1 rounded-md border border-destructive/40 px-3 py-2 text-xs font-semibold text-destructive"><Trash2 className="size-4" />Delete</button>
+              <Link to="/field/$id" params={{ id }} className="flex min-h-11 w-full items-center justify-center gap-1 rounded-md bg-accent px-3 py-2 text-sm font-semibold text-accent-foreground sm:w-auto"><ClipboardCheck className="size-4" />Fiche d'intervention</Link>
+              {me?.isAdmin && <button onClick={async () => { if (!confirm("Delete this work order?")) return; await supabase.from("ops_tasks").delete().eq("id", id); qc.invalidateQueries(); nav({ to: "/tasks" }); }}
+                className="ml-auto flex items-center gap-1 rounded-md border border-destructive/40 px-3 py-2 text-xs font-semibold text-destructive"><Trash2 className="size-4" />Delete</button>}
             </div>
           </Panel>
           <Panel className="p-5">
@@ -94,14 +102,27 @@ function TaskDetail() {
             </form>
           </Panel>
         </div>
-        <Panel className="h-fit space-y-3 p-5">
+        <Panel className="order-first h-fit space-y-3 p-5 lg:order-none">
           <h2 className="font-semibold">Dispatch assignment</h2>
+          {me?.isDispatcher ? (<>
           <label className="block"><span className="eyebrow">Technician</span>
-            <select value={task.technician_id ?? ""} onChange={(e) => { const t = techs.find((x) => x.id === e.target.value); update({ technician_id: e.target.value || null, ...(e.target.value && task.status === "new" ? { status: "dispatched" } : {}) }, t ? `Assigned to ${t.name}.` : "Unassigned."); }}
-              className="mt-1 h-10 w-full rounded-md border bg-card px-3 text-sm"><option value="">Unassigned</option>{techs.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select></label>
+            <select value={task.technician_id ?? ""} onChange={(e) => {
+              const t = techs.find((x) => x.id === e.target.value);
+              if (t) {
+                const start = Date.now(), end = task.due_at ? new Date(task.due_at).getTime() : start + (SLA_HOURS[task.priority] ?? 24) * 3600_000;
+                const c = techConflicts(t.id, start, Math.max(end, start + 3600_000), blocks, tasks ?? [], task.id);
+                if (c.length && !confirm(`${t.name} a un conflit :\n- ${c.join("\n- ")}\n\nAssigner quand même ?`)) return;
+              }
+              update({ technician_id: e.target.value || null, ...(e.target.value && task.status === "new" ? { status: "dispatched" } : {}) }, t ? `Assigned to ${t.name}.` : "Unassigned.");
+            }}
+              className="mt-1 h-11 w-full rounded-md border bg-card px-3 text-sm"><option value="">Unassigned</option>{techs.map((t) => {
+                const c = techConflicts(t.id, Date.now(), task.due_at ? Math.max(new Date(task.due_at).getTime(), Date.now() + 3600_000) : Date.now() + 4 * 3600_000, blocks, tasks ?? [], task.id);
+                return <option key={t.id} value={t.id}>{t.name}{c.length ? " — conflit" : ""}</option>;
+              })}</select></label>
           <label className="block"><span className="eyebrow">Priority</span>
-            <select value={task.priority} onChange={(e) => update({ priority: e.target.value }, `Priority set to ${e.target.value}.`)} className="mt-1 h-10 w-full rounded-md border bg-card px-3 text-sm">
+            <select value={task.priority} onChange={(e) => update({ priority: e.target.value }, `Priority set to ${e.target.value}.`)} className="mt-1 h-11 w-full rounded-md border bg-card px-3 text-sm">
               {["critical", "high", "medium", "low"].map((p) => <option key={p} value={p}>{p}</option>)}</select></label>
+          </>) : <p className="text-sm">Assigné à <b>{task.technician?.name ?? "—"}</b>. Mettez à jour le statut et remplissez la fiche terrain.</p>}
           <Link to="/sites" className="block text-sm font-semibold text-primary">Voir le site sur la carte →</Link>
         </Panel>
       </div>

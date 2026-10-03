@@ -4,7 +4,7 @@ import { Download } from "lucide-react";
 import { PageHead, Panel } from "@/components/AppShell";
 import { DEFAULT_PREFS, SITE_STATUS, loadPrefs, savePrefs, sla, statusLabel, useSiteEvents, useSites, useTasks, type AlertPrefs, type SiteStatus } from "@/lib/ops";
 
-export const Route = createFileRoute("/reports")({
+export const Route = createFileRoute("/_authenticated/reports")({
   head: () => ({
     meta: [
       { title: "Reports & alerts — GSM O&M" },

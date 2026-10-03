@@ -2,11 +2,14 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
+import { runOrQueue } from "@/lib/offline";
 
 export type Site = Tables<"ops_sites">;
 export type Technician = Tables<"ops_technicians">;
 export type Task = Tables<"ops_tasks">;
 export type Activity = Tables<"ops_task_activity">;
+export type Availability = Tables<"ops_tech_availability">;
+export type Role = "admin" | "supervisor" | "technician";
 export type TaskWithRefs = Task & { site: Site | null; technician: Technician | null };
 
 export const SITE_STATUS = {
@@ -123,6 +126,7 @@ export function useRealtime(onSiteChange?: (oldStatus: string | undefined, site:
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "ops_task_activity" }, () => qc.invalidateQueries({ queryKey: ["activity"] }))
       .on("postgres_changes", { event: "*", schema: "public", table: "ops_site_events" }, () => qc.invalidateQueries({ queryKey: ["site-events"] }))
+      .on("postgres_changes", { event: "*", schema: "public", table: "ops_tech_availability" }, () => qc.invalidateQueries({ queryKey: ["availability"] }))
       .on("postgres_changes", { event: "*", schema: "public", table: "ops_technicians" }, () => qc.invalidateQueries({ queryKey: ["techs"] }))
       .subscribe((s) => setLive({ live: s === "SUBSCRIBED" }));
     return () => { supabase.removeChannel(ch); };
@@ -141,6 +145,46 @@ export const useSiteEvents = (siteId?: string | null) =>
   });
 
 export async function logActivity(task_id: string, actor: string, message: string, category: Activity["category"]) {
-  const { error } = await supabase.from("ops_task_activity").insert({ task_id, actor, message, category });
-  if (error) throw new Error(error.message);
+  return runOrQueue({ kind: "activity", row: { task_id, actor, message, category } });
+}
+
+/** Current account: roles + linked technician. Rights are enforced by the database; this only drives the UI. */
+export const useMe = () =>
+  useQuery({
+    queryKey: ["me"],
+    queryFn: async () => {
+      const { data: u } = await supabase.auth.getUser();
+      const uid = u.user?.id;
+      if (!uid) return { userId: null, email: null, roles: [] as Role[], technicianId: null, isAdmin: false, isDispatcher: false };
+      const [{ data: roles }, { data: profile }] = await Promise.all([
+        supabase.from("user_roles").select("role").eq("user_id", uid),
+        supabase.from("profiles").select("*").eq("user_id", uid).maybeSingle(),
+      ]);
+      const r = (roles ?? []).map((x) => x.role as Role);
+      return {
+        userId: uid, email: u.user?.email ?? null, roles: r, technicianId: profile?.technician_id ?? null,
+        isAdmin: r.includes("admin"), isDispatcher: r.includes("admin") || r.includes("supervisor"),
+      };
+    },
+  });
+
+export const useAvailability = () =>
+  useQuery({ queryKey: ["availability"], queryFn: async () => throwing(await supabase.from("ops_tech_availability").select("*").order("starts_at")) });
+
+export const AVAIL_KIND: Record<string, string> = { off: "Repos", leave: "Congé", training: "Formation", standby: "Astreinte" };
+
+/** Conflicts for assigning a technician over [start, end]: unavailability blocks and other active work orders. */
+export function techConflicts(techId: string, start: number, end: number, blocks: Availability[], tasks: TaskWithRefs[], excludeTaskId?: string) {
+  const out: string[] = [];
+  for (const b of blocks) {
+    if (b.technician_id !== techId || b.kind === "standby") continue;
+    if (new Date(b.starts_at).getTime() < end && new Date(b.ends_at).getTime() > start)
+      out.push(`${AVAIL_KIND[b.kind] ?? b.kind} ${fmtTime(b.starts_at)} → ${fmtTime(b.ends_at)}`);
+  }
+  for (const t of tasks) {
+    if (t.technician_id !== techId || t.id === excludeTaskId || !ACTIVE.includes(t.status)) continue;
+    const ts = new Date(t.created_at).getTime(), te = t.due_at ? new Date(t.due_at).getTime() : ts + (SLA_HOURS[t.priority] ?? 24) * 3600_000;
+    if (ts < end && te > start) out.push(`${t.task_code} en cours (${t.site?.code ?? ""})`);
+  }
+  return out;
 }

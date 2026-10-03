@@ -248,6 +248,44 @@ export type Database = {
           },
         ]
       }
+      ops_tech_availability: {
+        Row: {
+          created_at: string
+          ends_at: string
+          id: string
+          kind: string
+          note: string | null
+          starts_at: string
+          technician_id: string
+        }
+        Insert: {
+          created_at?: string
+          ends_at: string
+          id?: string
+          kind?: string
+          note?: string | null
+          starts_at: string
+          technician_id: string
+        }
+        Update: {
+          created_at?: string
+          ends_at?: string
+          id?: string
+          kind?: string
+          note?: string | null
+          starts_at?: string
+          technician_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ops_tech_availability_technician_id_fkey"
+            columns: ["technician_id"]
+            isOneToOne: false
+            referencedRelation: "ops_technicians"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ops_technicians: {
         Row: {
           availability: string
@@ -284,15 +322,74 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          email: string | null
+          technician_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          technician_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          technician_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_technician_id_fkey"
+            columns: ["technician_id"]
+            isOneToOne: true
+            referencedRelation: "ops_technicians"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_any_role: { Args: { _user_id: string }; Returns: boolean }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_dispatcher: { Args: { _user_id: string }; Returns: boolean }
+      my_technician_id: { Args: never; Returns: string }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "supervisor" | "technician"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -419,6 +516,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "supervisor", "technician"],
+    },
   },
 } as const
