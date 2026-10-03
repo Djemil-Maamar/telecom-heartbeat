@@ -9,6 +9,8 @@
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
 
-- Ops data (sites, technicians, tasks, activity, field reports, site events) lives in Lovable Cloud tables read directly from the browser client; one realtime channel is mounted in AppShell. Why: single live source for dispatch desk.
+- Ops data lives in Lovable Cloud tables read from the browser client under role-based RLS (has_role / is_dispatcher / my_technician_id); one realtime channel is mounted in AppShell. Why: rights enforced in the database, not the UI.
+- All app pages live under src/routes/_authenticated; the first account is made admin by ensureProfile, later accounts get no role until an admin grants one. Why: no open access.
+- Offline: query cache persisted to localStorage; field writes go through runOrQueue (src/lib/offline.ts) and are replayed on reconnect. Why: field use without network.
 - The map uses Leaflet + leaflet.markercluster, lazy-loaded behind ClientOnly. Why: Leaflet touches window at import time.
 - Site status history is written by a DB trigger into ops_site_events. Why: history can't be skipped by any client.
