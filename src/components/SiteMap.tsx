@@ -12,11 +12,12 @@ type Props = {
   focus: { lat: number; lng: number; key: number } | null;
   showZones: boolean;
   onSelect: (id: string) => void;
+  persistKey?: string;
 };
 
 const RANK = { normal: 0, maintenance: 1, alarm: 2 } as Record<string, number>;
 
-export default function SiteMap({ sites, allSites, techs, selectedId, focus, showZones, onSelect }: Props) {
+export default function SiteMap({ sites, allSites, techs, selectedId, focus, showZones, onSelect, persistKey }: Props) {
   const el = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
   const cluster = useRef<L.MarkerClusterGroup | null>(null);
@@ -29,6 +30,13 @@ export default function SiteMap({ sites, allSites, techs, selectedId, focus, sho
   useEffect(() => {
     if (!el.current) return;
     const m = L.map(el.current).setView([9.08, 7.4], 6);
+    if (persistKey) {
+      try {
+        const v = JSON.parse(localStorage.getItem(persistKey) ?? "null");
+        if (v && typeof v.lat === "number") { m.setView([v.lat, v.lng], v.zoom); fitted.current = true; }
+      } catch { /* ignore */ }
+      m.on("moveend", () => { const c = m.getCenter(); localStorage.setItem(persistKey, JSON.stringify({ lat: c.lat, lng: c.lng, zoom: m.getZoom() })); });
+    }
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: "&copy; OpenStreetMap contributors",
       maxZoom: 19,
