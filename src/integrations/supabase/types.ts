@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       ops_field_reports: {
         Row: {
+          ai_analysis: Json | null
           battery_voltage: number | null
           checklist: Json
           created_at: string
@@ -28,6 +29,7 @@ export type Database = {
           technician_name: string
         }
         Insert: {
+          ai_analysis?: Json | null
           battery_voltage?: number | null
           checklist?: Json
           created_at?: string
@@ -40,6 +42,7 @@ export type Database = {
           technician_name: string
         }
         Update: {
+          ai_analysis?: Json | null
           battery_voltage?: number | null
           checklist?: Json
           created_at?: string
