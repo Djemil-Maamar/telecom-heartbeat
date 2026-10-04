@@ -14,3 +14,4 @@
 - Offline: query cache persisted to localStorage; field writes go through runOrQueue (src/lib/offline.ts) and are replayed on reconnect. Why: field use without network.
 - The map uses Leaflet + leaflet.markercluster, lazy-loaded behind ClientOnly. Why: Leaflet touches window at import time.
 - Site status history is written by a DB trigger into ops_site_events. Why: history can't be skipped by any client.
+- AI field-report analysis runs in a requireSupabaseAuth server fn (src/lib/gpm-ai.functions.ts → gpm-ai.server.ts, Responses API, structured output) and the result is saved on ops_field_reports.ai_analysis. Why: key stays server-side and the analysis is kept with the report.
