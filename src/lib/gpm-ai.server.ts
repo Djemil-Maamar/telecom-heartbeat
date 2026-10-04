@@ -23,7 +23,7 @@ Analyse la fiche d'intervention terrain : relevés, check-list, notes et photos.
 Réponds en français, de façon concise : 0 à 5 anomalies, 1 à 5 actions. N'invente pas de mesures absentes ; signale-les si elles sont nécessaires.`;
 
 export async function analyzeGpm(input: GpmInput, signal?: AbortSignal): Promise<GpmAnalysis> {
-  const apiKey = process.env.LOVABLE_API_KEY;
+  const apiKey = process.env['LOVABLE_API_KEY'];
   if (!apiKey) throw new Error("Analyse IA non configurée");
   const provider = createOpenAI({
     baseURL: "https://ai.gateway.lovable.dev/v1",
@@ -35,7 +35,7 @@ export async function analyzeGpm(input: GpmInput, signal?: AbortSignal): Promise
     model: provider.responses("openai/gpt-6-astra"),
     system: SYSTEM,
     output: Output.object({ schema: analysisSchema }),
-    abortSignal: signal,
+    ...(signal ? { abortSignal: signal } : {}),
     maxRetries: 0,
     messages: [{
       role: "user",
