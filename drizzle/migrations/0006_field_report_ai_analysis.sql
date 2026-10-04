@@ -1,0 +1,1 @@
+ALTER TABLE public.ops_field_reports ADD COLUMN IF NOT EXISTS ai_analysis jsonb;

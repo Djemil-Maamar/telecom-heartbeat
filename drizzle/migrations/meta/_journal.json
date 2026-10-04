@@ -43,6 +43,13 @@
       "when": 1791052979772,
       "tag": "0005_roles_and_availability",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791072854707,
+      "tag": "0006_field_report_ai_analysis",
+      "breakpoints": true
     }
   ]
 }
