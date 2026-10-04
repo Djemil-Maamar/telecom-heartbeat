@@ -148,7 +148,7 @@ export function TaskForm({ task, siteId }: { task?: Task; siteId?: string }) {
       if (task) {
         const { error } = await supabase.from("ops_tasks").update(d as never).eq("id", task.id); if (error) throw error;
       } else {
-        const code = `${d.type}-${Date.now().toString(36).toUpperCase().slice(-6)}`;
+        const code = `${String(d["type"])}-${Date.now().toString(36).toUpperCase().slice(-6)}`;
         const { error } = await supabase.from("ops_tasks").insert({ ...(d as object), task_code: code, status: "new" } as never); if (error) throw error;
       }
       refresh();
