@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Camera, Check, Sparkles } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { analyzeFieldReport } from "@/lib/gpm-ai.functions";
-import type { GpmAnalysis } from "@/lib/gpm-ai.server";
+import type { GpmAnalysis } from "@/lib/gpm-ai.functions";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Panel } from "@/components/AppShell";

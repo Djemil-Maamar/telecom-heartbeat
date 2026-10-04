@@ -19,3 +19,4 @@ export const analyzeFieldReport = createServerFn({ method: "POST" })
     const { analyzeGpm } = await import("./gpm-ai.server");
     return analyzeGpm(data);
   });
+export type { GpmAnalysis } from "./gpm-ai.server";
